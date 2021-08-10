@@ -1,6 +1,8 @@
 package com.javastudio.tutorial.web.api;
 
-import com.javastudio.tutorial.repository.FormatConversionRepository;
+import com.javastudio.tutorial.repository.jpa.FormatConversionJpaRepository;
+import com.javastudio.tutorial.repository.mongo.FormatConversionMongoRepository;
+import com.javastudio.tutorial.service.FormatConversionService;
 import com.spg.uccs.model.conversion.FunctionCall;
 import com.spg.uccs.model.conversion.PropertyMapping;
 import com.spg.uccs.model.format.FormatConversion;
@@ -24,11 +26,12 @@ public class ConverterResource {
     private Logger logger = LoggerFactory.getLogger(ConverterResource.class);
 
     @Autowired
-    private FormatConversionRepository repository;
+    private FormatConversionService formatConversionService;
+
 
     @GetMapping(value = "/duplicate/{conversionName}", produces = {"application/json"})
     public ResponseEntity<FormatConversion> duplicateConvertor(@Validated @PathVariable(value = "conversionName") String conversionName) {
-        Optional<FormatConversion> conversion = repository.findByName(conversionName);
+        Optional<FormatConversion> conversion = formatConversionService.findByName(conversionName);
         if (conversion.isPresent()) {
             FormatConversion conversion1 = conversion.get();
             String newId = UUID.randomUUID().toString();
@@ -39,14 +42,15 @@ public class ConverterResource {
             conversion1.setId(newId);
             conversion1.setName(newName);
             conversion1.setTag("duplicated");
-            repository.save(conversion1);
+
+            formatConversionService.save(conversion1);
             return ResponseEntity.ok(conversion1);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     public void duplicate(FormatConversion parent, String newParentId, String newParentName) {
-        List<FormatConversion> formatConversion = repository.findByParentConversionId(parent.getId());
+        List<FormatConversion> formatConversion = formatConversionService.findByParentConversionId(parent.getId());
         for (FormatConversion conversion : formatConversion) {
             String newId = UUID.randomUUID().toString();
             String newName = conversion.getName() + "_Duplicated";
@@ -71,7 +75,7 @@ public class ConverterResource {
             conversion.setId(newId);
             conversion.setName(newName);
             conversion.setTag("duplicated");
-            repository.save(conversion);
+            formatConversionService.save(conversion);
         }
     }
 }
