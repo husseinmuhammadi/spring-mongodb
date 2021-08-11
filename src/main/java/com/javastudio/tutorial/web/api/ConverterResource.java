@@ -34,48 +34,9 @@ public class ConverterResource {
         Optional<FormatConversion> conversion = formatConversionService.findByName(conversionName);
         if (conversion.isPresent()) {
             FormatConversion conversion1 = conversion.get();
-            String newId = UUID.randomUUID().toString();
-            String newName = conversion1.getName() + "_Duplicated";
-
-            duplicate(conversion1, newId, newName);
-
-            conversion1.setId(newId);
-            conversion1.setName(newName);
-            conversion1.setTag("duplicated");
-
-            formatConversionService.save(conversion1);
+            formatConversionService.duplicate(conversion1);
             return ResponseEntity.ok(conversion1);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
-    public void duplicate(FormatConversion parent, String newParentId, String newParentName) {
-        List<FormatConversion> formatConversion = formatConversionService.findByParentConversionId(parent.getId());
-        for (FormatConversion conversion : formatConversion) {
-            String newId = UUID.randomUUID().toString();
-            String newName = conversion.getName() + "_Duplicated";
-
-            for (FunctionCall function : parent.getFunctions()) {
-                if (function.getName().contains(conversion.getName())) {
-                    function.setName(function.getName().replace(conversion.getName(), newName));
-                }
-            }
-            for (PropertyMapping mapping : parent.getMappings()) {
-                if (mapping.getSource().contains(conversion.getName())) {
-                    mapping.setSource(mapping.getSource().replace(conversion.getName(), newName));
-                }
-                if (mapping.getTarget().contains(conversion.getName())) {
-                    mapping.setTarget(mapping.getTarget().replace(conversion.getName(), newName));
-                }
-            }
-
-            duplicate(conversion, newId, newName);
-
-            conversion.setParentConversionId(newParentId);
-            conversion.setId(newId);
-            conversion.setName(newName);
-            conversion.setTag("duplicated");
-            formatConversionService.save(conversion);
-        }
     }
 }
